@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anushka AI Chatbot 😼 - Billa Royale Assistant</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.469.0/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Typing Dots Animation */
+        .typing-dot {
+            animation: typingAnimation 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingAnimation {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { scrollbar-width: none; }
+
+        /* Glassmorphism Effects */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col overflow-hidden bg-slate-950">
+
+    <!-- App Container -->
+    <div class="flex h-full w-full max-w-7xl mx-auto shadow-2xl relative overflow-hidden">
+        
+        <!-- Sidebar Navigation (Desktop) / Drawer Overlay -->
+        <aside id="sidebar" class="w-80 shrink-0 bg-slate-900 flex-col border-r border-slate-800 transition-all duration-300 absolute md:relative z-20 h-full -translate-x-full md:translate-x-0 flex">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-xl shadow-lg shadow-orange-500/20 font-bold">
+                        😼
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-100 leading-tight">Anushka Gaming Hub</h2>
+                        <span class="text-xs text-amber-400 font-semibold flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Booyah AI Active
+                        </span>
+                    </div>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-4 space-y-2">
+                <button onclick="startNewChat()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-slate-950 font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/10 transition">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Naya Chat Shuru Karo 🍼
+                </button>
+                <button onclick="launchGameModal()" class="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold flex items-center justify-center gap-2 border border-slate-700 transition">
+                    <i data-lucide="gamepad-2" class="w-5 h-5"></i>
+                    Billa Royale Khele 🎮
+                </button>
+            </div>
+
+            <!-- Navigation Links / Presets -->
+            <div class="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Quick Squad Menu</div>
+            <nav class="flex-1 overflow-y-auto px-4 space-y-1">
+                <button onclick="sendQuickPrompt('Billa Royale Tips')" class="w-full p-3 rounded-xl hover:bg-slate-800/60 text-left text-slate-300 hover:text-white transition flex items-center gap-3 group">
+                    <div class="p-2 rounded-lg bg-slate-800 group-hover:bg-amber-500/20 group-hover:text-amber-400 transition">
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium">Bermuda Pro Tips</div>
+                        <div class="text-xs text-slate-500">Clock Tower & Peak strategy</div>
+                    </div>
+                </button>
+                <button onclick="sendQuickPrompt('Free Fire Squad Setup')" class="w-full p-3 rounded-xl hover:bg-slate-800/60 text-left text-slate-300 hover:text-white transition flex items-center gap-3 group">
+                    <div class="p-2 rounded-lg bg-slate-800 group-hover:bg-amber-500/20 group-hover:text-amber-400 transition">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium">Best Squad Combinations</div>
+                        <div class="text-xs text-slate-500">Rushers & Snipers setup</div>
+                    </div>
+                </button>
+                <button onclick="sendQuickPrompt('Gaming Strategies')" class="w-full p-3 rounded-xl hover:bg-slate-800/60 text-left text-slate-300 hover:text-white transition flex items-center gap-3 group">
+                    <div class="p-2 rounded-lg bg-slate-800 group-hover:bg-amber-500/20 group-hover:text-amber-400 transition">
+                        <i data-lucide="crosshair" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium">Headshot & Sensitivity</div>
+                        <div class="text-xs text-slate-500">Perfect recoil controls</div>
+                    </div>
+                </button>
+                <button onclick="sendQuickPrompt('Math/Study Help')" class="w-full p-3 rounded-xl hover:bg-slate-800/60 text-left text-slate-300 hover:text-white transition flex items-center gap-3 group">
+                    <div class="p-2 rounded-lg bg-slate-800 group-hover:bg-amber-500/20 group-hover:text-amber-400 transition">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium">Padhai Mein Madad 🧠</div>
+                        <div class="text-xs text-slate-500">Anushka solves math & code</div>
+                    </div>
+                </button>
+            </nav>
+
+            <!-- Bottom Settings Trigger -->
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="toggleSettingsModal()" class="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">Settings & Audio</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 min-w-0 flex flex-col h-full bg-slate-950 relative">
+            
+            <!-- Chat Header -->
+            <header class="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between z-10">
+                <div class="flex items-center gap-3">
+                    <button id="open-sidebar-btn" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xl border border-amber-500/30">
+                            😼
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-100 text-base flex items-center gap-2">
+                            Anushka SA 👑
+                            <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-semibold border border-amber-500/30">BOOYAH MASTER</span>
+                        </h1>
+                        <p class="text-xs text-slate-400" id="bot-status-text">Tayyar baani game ke liye! 😼</p>
+                    </div>
+                </div>
+
+                <!-- Controls Right Header -->
+                <div class="flex items-center gap-2">
+                    <button id="sound-toggle-btn" onclick="toggleSound()" class="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition" title="Toggle Sound">
+                        <i data-lucide="volume-2" id="sound-icon"></i>
+                    </button>
+                    <button onclick="launchGameModal()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold hover:bg-amber-500/20 transition">
+                        <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Play Royale
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Messages Display -->
+            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- Welcome Banner -->
+                <div class="max-w-md mx-auto my-4 p-4 rounded-2xl glass-panel text-center space-y-3 border border-slate-800">
+                    <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-3xl flex items-center justify-center mx-auto animate-bounce">
+                        😼
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Ka ho bhaiya! Sab Thik Thak? 🍼</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Hum aahan ke aapan <strong class="text-amber-400">Anushka SA</strong>! Billa Royale ke Bermuda map se seedhe online aail baani. Gaming strategies, Squad setup, ya padhai ka doubt... Sab poochha, Booyah pakka ba! 🏆
+                    </p>
+                    <div class="flex flex-wrap gap-2 justify-center pt-2">
+                        <button onclick="sendQuickPrompt('Billa Royale Tips')" class="text-xs px-3 py-1.5 rounded-full bg-slate-800 hover:bg-amber-500/20 text-amber-300 border border-slate-700 transition">🎮 Bermuda Tips</button>
+                        <button onclick="sendQuickPrompt('Free Fire Squad Setup')" class="text-xs px-3 py-1.5 rounded-full bg-slate-800 hover:bg-amber-500/20 text-amber-300 border border-slate-700 transition">🔥 Best Squad</button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Messages Will Render Here -->
+
+            </div>
+
+            <!-- Animated Typing Indicator (Hidden by Default) -->
+            <div id="typing-indicator" class="hidden px-4 py-2 flex items-center gap-2 text-slate-400 text-xs">
+                <div class="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-sm border border-slate-700">😼</div>
+                <div class="bg-slate-800/80 px-4 py-2.5 rounded-2xl flex items-center gap-1.5 border border-slate-700/50">
+                    <span class="text-slate-400 text-xs font-medium mr-1">Anushka likh raha hai</span>
+                    <span class="w-1.5 h-1.5 bg-amber-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-amber-400 rounded-full typing-dot"></span>
+                    <span class="w-1.5 h-1.5 bg-amber-400 rounded-full typing-dot"></span>
+                </div>
+            </div>
+
+            <!-- Quick Chips Strip -->
+            <div class="px-4 py-2 bg-slate-900/40 overflow-x-auto max-w-full flex items-center gap-2 no-scrollbar border-t border-slate-800/50">
+                <span class="text-xs font-bold text-slate-500 whitespace-nowrap flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> Quick Prompts:
+                </span>
+                <button onclick="sendQuickPrompt('Billa Royale Tips')" class="text-xs py-1 px-3 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 whitespace-nowrap border border-slate-700 transition">
+                    🎮 Billa Royale Tips
+                </button>
+                <button onclick="sendQuickPrompt('Free Fire Squad Setup')" class="text-xs py-1 px-3 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 whitespace-nowrap border border-slate-700 transition">
+                    🔥 Squad Setup
+                </button>
+                <button onclick="sendQuickPrompt('Gaming Strategies')" class="text-xs py-1 px-3 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 whitespace-nowrap border border-slate-700 transition">
+                    🎯 Sensitivity Tricks
+                </button>
+                <button onclick="sendQuickPrompt('Math/Study Help')" class="text-xs py-1 px-3 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 whitespace-nowrap border border-slate-700 transition">
+                    📚 Study & Math Help
+                </button>
+            </div>
+
+            <!-- Chat Input Bar -->
+            <div class="p-3 sm:p-4 bg-slate-900 border-t border-slate-800">
+                <form id="chat-form" class="flex items-center gap-2" onsubmit="handleSendMessage(event)">
+                    <div class="relative flex-1">
+                        <input type="text" id="user-input" placeholder="Anushka se kuch poochho baby... (e.g. Peak par kaise rush kare?)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition">
+                    </div>
+                    <button type="button" id="send-btn" class="p-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 rounded-xl font-bold transition flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i data-lucide="sliders" class="text-amber-400"></i> Anushka Settings 😼
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-semibold text-sm text-slate-200">Sound Effects (Audio)</div>
+                        <div class="text-xs text-slate-400">Play sound on receiving message</div>
+                    </div>
+                    <input type="checkbox" id="sound-checkbox" checked onchange="toggleSound()" class="w-5 h-5 accent-amber-500 rounded cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-semibold text-sm text-slate-200">Persona Style</div>
+                        <div class="text-xs text-slate-400">Anushka's talking vibe</div>
+                    </div>
+                    <select id="persona-select" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-amber-400 font-semibold focus:outline-none">
+                        <option value="hinglish">Hinglish + Bhojpuri (Standard)</option>
+                        <option value="bhojpuri">Pure Bhojpuri Gamer</option>
+                        <option value="english">Cool Gamer English</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="saveSettings()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition">
+                Save & Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Launcher Modal -->
+    <div id="game-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 text-4xl flex items-center justify-center mx-auto shadow-xl shadow-orange-500/20">
+                😼🎮
+            </div>
+            <h3 class="font-extrabold text-2xl text-white">Billa Royale Arena</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+                Bermuda island par 20 Bots ke saath battle royale match shuru hone wala hai! Gloo Wall ready rakho aur Booyah ke liye tayyar ho jao! 🏆
+            </p>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-left text-xs space-y-2 text-slate-300">
+                <div class="font-bold text-amber-400 uppercase tracking-wider">Controls:</div>
+                <div>• <strong class="text-amber-400">PC</strong>: WASD / Arrow Keys for movement, Mouse to aim & shoot.</div>
+                <div>• <strong class="text-amber-400">Mobile</strong>: Dual virtual joysticks for movement & aiming.</div>
+                <div>• <strong class="text-amber-400">Safe Zone</strong>: Shrinks automatically! Clock Tower safe house hai.</div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeGameModal()" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition">
+                    Wapas Chat Par
+                </button>
+                <button onclick="simulateGameStart()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold hover:brightness-110 transition shadow-lg shadow-orange-500/20">
+                    Play Now! 🔥
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Icons are optional: if the library fails to load, the app still works
+        function refreshIcons() {
+            try { if (window.lucide) lucide.createIcons(); } catch (e) {}
+        }
+        refreshIcons();
+
+        // Audio System (Web Audio API Synthesizer)
+        let soundEnabled = true;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playPopSound() {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        // Toggle Sound Settings
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-checkbox').checked = soundEnabled;
+            const soundIcon = document.getElementById('sound-icon');
+            if (soundEnabled) {
+                soundIcon.setAttribute('data-lucide', 'volume-2');
+            } else {
+                soundIcon.setAttribute('data-lucide', 'volume-x');
+            }
+            refreshIcons();
+        }
+
+        // Sidebar Navigation Toggles
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('open-sidebar-btn').addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+        });
+        document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+            sidebar.classList.add('-translate-x-full');
+        });
+
+        // Modals Toggles
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function launchGameModal() {
+            const modal = document.getElementById('game-modal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeGameModal() {
+            const modal = document.getElementById('game-modal');
+            modal.classList.add('hidden');
+        }
+
+        function simulateGameStart() {
+            closeGameModal();
+            appendMessage("bot", "🎮 **Billa Royale Match Initialized!** Loading Bermuda map assets... (Entering lobby in 3... 2... 1...) BOOYAH! 💥", getCurrentTime());
+        }
+
+        // Helper: Get formatted current time
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Safe formatting: escape HTML first, then **bold**, *italic*, `code`, line breaks
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function formatText(text) {
+            return escapeHtml(text)
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[\s(])\*(?!\s)(.+?)\*(?=[\s).,!?]|$)/g, '$1<em>$2</em>')
+                .replace(/`([^`]+)`/g, '<code class="px-1 rounded bg-black/30">$1</code>')
+                .replace(/^\s*[*-]\s+/gm, '• ')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Append Message to Chat Window
+        function appendMessage(sender, text, time) {
+            const chatContainer = document.getElementById('chat-container');
+            const isBot = sender === 'bot';
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex gap-3 max-w-[85%] sm:max-w-[75%] ${isBot ? 'mr-auto' : 'ml-auto flex-row-reverse'}`;
+
+            const avatar = isBot 
+                ? `<div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-500/40 flex items-center justify-center text-base shrink-0">😼</div>`
+                : `<div class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">YOU</div>`;
+
+            const messageBg = isBot 
+                ? 'bg-slate-900 border border-slate-800 text-slate-100' 
+                : 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-medium';
+
+            // Convert basic bold markdown **text** to HTML <strong>
+            const formattedText = formatText(text);
+
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="space-y-1">
+                    <div class="${messageBg} p-3.5 rounded-2xl ${isBot ? 'rounded-tl-none' : 'rounded-tr-none'} shadow-md text-sm leading-relaxed">
+                        ${formattedText}
+                    </div>
+                    <div class="text-[10px] text-slate-500 ${isBot ? 'text-left' : 'text-right'} px-1">
+                        ${time}
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (isBot) playPopSound();
+        }
+
+        // Start New Chat Reset
+        function startNewChat() {
+            chatHistory.length = 0;
+            sidebar.classList.add('-translate-x-full');
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = `
+                <div class="max-w-md mx-auto my-4 p-4 rounded-2xl glass-panel text-center space-y-3 border border-slate-800">
+                    <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-3xl flex items-center justify-center mx-auto animate-bounce">
+                        😼
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Naya Session Shuru Ho Gaya! 🍼</h3>
+                    <p class="text-xs text-slate-400">
+                        Anushka SA tayyar ba aapka madad kare ke liye. Kuchh bhi poochha gaming ya study ke baare mein!
+                    </p>
+                </div>
+            `;
+        }
+
+        // Quick Prompt Handler
+        function sendQuickPrompt(promptText) {
+            sidebar.classList.add('-translate-x-full');
+            const input = document.getElementById('user-input');
+            input.value = promptText;
+            handleSendMessage({ preventDefault() {} });
+        }
+
+        // Settings (persisted in localStorage, safely)
+        function loadSettings() {
+            try {
+                const persona = localStorage.getItem('anushka_persona') || 'hinglish';
+                document.getElementById('persona-select').value = persona;
+            } catch (e) {}
+        }
+        function saveSettings() {
+            try {
+                localStorage.setItem('anushka_persona', document.getElementById('persona-select').value);
+            } catch (e) {}
+            updateStatus();
+            toggleSettingsModal();
+        }
+        function updateStatus() {
+            document.getElementById('bot-status-text').textContent = 'Online • Tayyar baani game ke liye! 😼';
+        }
+        loadSettings();
+        updateStatus();
+
+        // Conversation memory (so Anushka remembers the chat)
+        const chatHistory = [];
+        let isBusy = false;
+
+        // Handle Send Message
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            if (isBusy) return;
+            const input = document.getElementById('user-input');
+            const userText = input.value.trim();
+            if (!userText) return;
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            isBusy = true;
+            document.getElementById('send-btn').classList.add('opacity-50');
+
+            appendMessage('user', userText, getCurrentTime());
+            input.value = '';
+
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.classList.remove('hidden');
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const botResponse = await getAnushkaResponse(userText);
+                chatHistory.push({ role: 'user', parts: [{ text: userText }] });
+                chatHistory.push({ role: 'model', parts: [{ text: botResponse }] });
+                appendMessage('bot', botResponse, getCurrentTime());
+            } catch (error) {
+                console.error("API Call Error:", error);
+                appendMessage('bot', "Arey bhaiya, kuch gadbad ho gayi! 😼💥 Ek baar fir se try karo.", getCurrentTime());
+            } finally {
+                typingIndicator.classList.add('hidden');
+                isBusy = false;
+                document.getElementById('send-btn').classList.remove('opacity-50');
+                input.focus();
+            }
+        }
+
+        // Offline replies (built-in replies)
+        function offlineAnushkaReply(prompt) {
+            const q = prompt.toLowerCase();
+            const safe = escapeHtml(prompt.length > 60 ? prompt.slice(0, 60) + '…' : prompt);
+
+            if (/^\s*(hi|hello|hey|hii+|namaste|ram ram|kaise ho|ka ho|sup)\b/.test(q)) {
+                return "Ka ho bhaiya! 😼 Hum Anushka SA, ekdum mast baani! Aaj kaun si game strategy chahiye? 🎮🔥";
+            }
+            const mathMatch = prompt.replace(/[x×]/gi, '*').replace(/÷/g, '/').match(/^[\s\d.+\-*/()%^]+$/);
+            if (mathMatch && /\d\s*[+\-*/%^]\s*\d/.test(prompt)) {
+                try {
+                    const val = Function('"use strict"; return (' + prompt.replace(/[x×]/gi, '*').replace(/÷/g, '/').replace(/\^/g, '**') + ')')();
+                    if (Number.isFinite(val)) return `🧠 **${safe} = ${Math.round(val * 1e6) / 1e6}**\nEasy hai baby! Aur sawal poochho 📚`;
+                } catch (e) {}
+            }
+            if (/(tip|royale|bermuda|peak|clock|mill|rush)/.test(q)) {
+                return "🔥 **Bermuda Pro Tips**\nAahan ke Anushka SA batawat baani:\n• **Clock Tower**: Upar chadh ke high ground lo, neeche se aane waale ko easy kill 🎯\n• **Peak**: Gloo wall pehle lagao, phir push karo\n• Safe zone shrink hone se pehle move karo, tension mat lo baby 🍼\nBooyah pakka ba! 🏆";
+            }
+            if (/(squad|combo|team|setup)/.test(q)) {
+                return "👑 **Best Squad Setup**\n• **Rusher**: MP40 + M1887, close fight ka raja 💥\n• **Sniper**: AWM, dur se headshot 🎯\n• **Support**: Heal + gloo wall, sabko bachao 🍼\n• **Scout**: Map aur enemy info deta rahe\nTeamwork se hi Booyah aata ba! 🏆";
+            }
+            if (/(sens|headshot|recoil|aim|strateg)/.test(q)) {
+                return "🎯 **Headshot Tips**\n• Sensitivity thodi medium rakho, bahut high nahi\n• Crosshair hamesha sir ki height par rakho\n• Recoil control ke liye short bursts maaro\n• Training mode mein roz 10 min practice 🔥\nPractice se hi Anushka SA bante hain! 😼";
+            }
+            if (/(math|study|padhai|code|solve|\d\s*[+\-*/x]\s*\d)/.test(q)) {
+                return "🧠 Padhai ka doubt? Poochho baby! Question poora likho (jaise: 'x ka value nikalo 2x+6=14') aur Anushka step-by-step samjhayegi 📚\n(Full AI jawab Streamlit wale version mein milenge 🚀)";
+            }
+            return `Tumne bola: "${safe}" 👀\nAbhi hum gaming tips, squad setup, sensitivity aur chhota math samajh paate baani 😅\nFull AI wala version Streamlit app mein milega 🚀`;
+        }
+
+        // Local replies (the full AI version runs in the Streamlit app)
+        async function getAnushkaResponse(prompt) {
+            await new Promise(r => setTimeout(r, 600));
+            return offlineAnushkaReply(prompt);
+        }
+
+        // Send via button click + Enter key (works even where form submit is blocked)
+        document.getElementById('send-btn').addEventListener('click', handleSendMessage);
+        document.getElementById('user-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSendMessage(e);
+        });
+    </script>
+</body>
+</html>
