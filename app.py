@@ -4,7 +4,7 @@ import streamlit as st
 
 st.set_page_config(page_title="Anushka SA 😼", page_icon="😼", layout="centered")
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 PERSONAS = {
     "Hinglish + Bhojpuri 😼": 'Speak in casual Hinglish with light Bhojpuri slang ("Ka ho bhaiya", "Booyah pakka ba", "Tension mat lo baby 🍼").',
@@ -20,38 +20,36 @@ QUICK = ["🎮 Bermuda Tips", "🔥 Best Squad Setup", "🎯 Headshot Tips", "�
 
 
 def get_key():
-    try:
-        if "GEMINI_API_KEY" in st.secrets:
-            return st.secrets["GEMINI_API_KEY"]
-    except Exception:
-        pass
-    return os.environ.get("GEMINI_API_KEY", "")
+    for name in ("GROQ_API_KEY", "GEMINI_API_KEY"):
+        try:
+            if name in st.secrets:
+                return st.secrets[name]
+        except Exception:
+            pass
+        if os.environ.get(name):
+            return os.environ[name]
+    return ""
 
 
-def ask_gemini(history, persona, mode, temperature):
+def ask_ai(history, persona, mode, temperature):
     system = (
         'You are "Anushka SA" 😼, a confident, funny, friendly gamer assistant for the game Billa Royale (Free Fire style, Bermuda map). '
         f"{PERSONAS[persona]} {MODES[mode]} "
         'Keep replies punchy (under ~150 words), use short lines, "•" bullets, **bold** for key terms and emojis like 😼🍼🏆🔥💥🎮.'
     )
-    contents = [
-        {"role": "user" if m["role"] == "user" else "model", "parts": [{"text": m["content"]}]}
-        for m in history[-12:]
+    messages = [{"role": "system", "content": system}] + [
+        {"role": m["role"], "content": m["content"]} for m in history[-12:]
     ]
     r = requests.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent",
-        headers={"x-goog-api-key": get_key(), "Content-Type": "application/json"},
-        json={
-            "contents": contents,
-            "systemInstruction": {"parts": [{"text": system}]},
-            "generationConfig": {"temperature": temperature},
-        },
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={"Authorization": f"Bearer {get_key()}", "Content-Type": "application/json"},
+        json={"model": MODEL, "messages": messages, "temperature": temperature},
         timeout=60,
     )
     data = r.json()
     if not r.ok:
         raise RuntimeError(data.get("error", {}).get("message", f"HTTP {r.status_code}"))
-    return data["candidates"][0]["content"]["parts"][0]["text"]
+    return data["choices"][0]["message"]["content"]
 
 
 # ---------- Sidebar ----------
@@ -72,7 +70,7 @@ st.title("Anushka SA 👑")
 st.caption("BOOYAH MASTER • Gaming, padhai aur masti — sab poochho!")
 
 if not get_key():
-    st.warning("API key set nahi hai. App Settings → Secrets mein `GEMINI_API_KEY` daalo. 🔑")
+    st.warning("API key set nahi hai. App Settings → Secrets mein `GROQ_API_KEY` daalo. 🔑")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -102,8 +100,9 @@ if prompt:
         else:
             try:
                 with st.spinner("Anushka likh rahi hai..."):
-                    reply = ask_gemini(st.session_state.messages, persona, mode, temperature)
+                    reply = ask_ai(st.session_state.messages, persona, mode, temperature)
             except Exception as e:
                 reply = f"Arey bhaiya, network ne hag diya! 😼💥\n\n`{e}`"
         st.markdown(reply)
     st.session_state.messages.append({"role": "assistant", "content": reply})
+    
