@@ -5,29 +5,29 @@ import re
 
 import requests
 import streamlit as st
+from PIL import Image
 
 # ============================================================
-# Anushka SA — Advanced v5.4.2.061 (Fixed Layout)
+# Anushka SA — Advanced v5.4.4 Vision & Uncapped Edition 😼🔥
 # ============================================================
 
 st.set_page_config(
-    page_title="Anushka SA v5.4.2.061 😼🔥",
+    page_title="Anushka SA v5.4.4 Uncapped 😼🔥",
     page_icon="😼",
     layout="centered",
 )
 
 GROQ_URL = "https://api.groq.com/openai/v1"
 PREFERRED_MODELS = [
+    "llama-3.2-11b-vision-preview",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
 ]
 
 PERSONAS = {
     "Hinglish + Bhojpuri 😼": (
         'Use casual Hinglish with light Bhojpuri phrases like "Ka ho" and '
-        '"Booyah pakka ba". Be friendly, playful, and clear.'
+        '"Booyah pakka ba". Be friendly, playful, and clear, just like a true friend.'
     ),
     "Pure Bhojpuri 🌾": (
         "Use fun Bhojpuri in Roman script, like a friendly desi gamer."
@@ -38,12 +38,15 @@ PERSONAS = {
 }
 
 MODES = {
+    "Coding & Tech 💻": (
+        "Focus on writing clean, runnable code, fixing errors/bugs, "
+        "Termux commands, and web development step by step."
+    ),
     "Gaming 🎮": (
-        "Focus on Free Fire/Battle Royale tips, map strategy, sensitivity, "
-        "team play, and game tactics."
+        "Focus on Free Fire/Battle Royale tips, map strategy, and tactics."
     ),
     "Padhai 📚": (
-        "Explain school subjects and code clearly, step by step."
+        "Explain school subjects and math clearly with examples."
     ),
     "Masti 😂": (
         "Focus on friendly, funny, general conversation."
@@ -51,13 +54,14 @@ MODES = {
 }
 
 QUICK_PROMPTS = [
+    "💻 Code Error Fix karo",
     "🎮 Bermuda Tips",
     "🔥 Best Squad Setup",
-    "🎯 Headshot Tips",
     "🧠 Math ka doubt hai",
 ]
 
 MODE_TEMPERATURE = {
+    "Coding & Tech 💻": 0.3,
     "Gaming 🎮": 0.8,
     "Padhai 📚": 0.2,
     "Masti 😂": 0.9,
@@ -202,8 +206,8 @@ def db(method, table, params=None, body=None, returning=False):
 
 # -------------------- Login / Signup --------------------
 def login_page():
-    st.title("Anushka SA v5.4.2.061 👑")
-    st.caption("BOOYAH MASTER • Login Portal")
+    st.title("Anushka SA v5.4.4 👑")
+    st.caption("VISION & UNCAFFED MASTER • Login Portal")
 
     if not (SUPABASE_URL and SUPABASE_ANON_KEY):
         st.error("Supabase URL aur Anon Key secrets mein set nahi hain.")
@@ -299,37 +303,60 @@ def delete_memory(mem_id):
     load_memories()
 
 
-# -------------------- AI & Voice --------------------
+# -------------------- AI & Vision --------------------
 @st.cache_data(ttl=600, show_spinner=False)
 def list_models(api_key):
     if not api_key:
-        return []
+        return PREFERRED_MODELS
     try:
         res = requests.get(f"{GROQ_URL}/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=15)
         if res.ok:
             ids = [i["id"] for i in res.json().get("data", [])]
-            return sorted([m for m in ids if not any(x in m.lower() for x in ("whisper", "tts", "embed"))])
+            vision_models = [m for m in ids if "vision" in m.lower() or "llava" in m.lower()]
+            other_models = [m for m in ids if not any(x in m.lower() for x in ("whisper", "tts", "embed", "vision", "llava"))]
+            return vision_models + PREFERRED_MODELS + other_models
     except Exception:
         pass
     return PREFERRED_MODELS
 
 
-def ask_ai(history, model, persona, mode, temp, memories):
+def ask_ai(history, model, persona, mode, temp, memories, image_bytes=None):
     mem_ctx = "\n".join(f"- {m['memory']}" for m in memories) if memories else ""
     sys_prompt = (
-        'You are "Anushka SA v5.4.2.061" 😼, an advanced AI assistant. '
+        'You are "Anushka SA v5.4.4" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
+        "Always reply in a warm, friendly tone with engaging Hinglish and Bhojpuri flavor like 'Ka ho babu, sab thik-thak?'. "
         f"Style: {PERSONAS[persona]} Mode: {MODES[mode]} "
+        "If an image or code error screenshot is provided, examine it deeply, understand the bug, and provide a clear, clean solution. "
         f"Memory context: {mem_ctx}"
     )
-    msgs = [{"role": "system", "content": sys_prompt}]
-    for h in history[-14:]:
-        if h.get("role") in ("user", "assistant") and isinstance(h.get("content"), str):
-            msgs.append({"role": h["role"], "content": h["content"]})
+
+    messages = [{"role": "system", "content": sys_prompt}]
+    
+    # Keeping history optimized to prevent token limit errors
+    for idx, h in enumerate(history[-10:]):
+        role = h.get("role")
+        content = h.get("content")
+        if role in ("user", "assistant") and isinstance(content, str):
+            if idx == len(history[-10:]) - 1 and image_bytes and role == "user":
+                encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": content},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
+                    ]
+                })
+            else:
+                messages.append({"role": role, "content": content})
+
+    active_model = model
+    if image_bytes and "vision" not in active_model.lower():
+        active_model = "llama-3.2-11b-vision-preview"
 
     res = requests.post(
         f"{GROQ_URL}/chat/completions",
         headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"},
-        json={"model": model, "messages": msgs, "temperature": temp},
+        json={"model": active_model, "messages": messages, "temperature": temp, "max_tokens": 2048},
         timeout=60,
     )
     if not res.ok:
@@ -363,10 +390,12 @@ except Exception:
     st.session_state.memories = []
 
 available_models = list_models(GROQ_KEY) if GROQ_KEY else PREFERRED_MODELS
-model = available_models[0] if available_models else "llama-3.3-70b-versatile"
+model = available_models[0] if available_models else "llama-3.2-11b-vision-preview"
 
 with st.sidebar:
     st.markdown(f"**👤 {st.session_state.user.get('email', 'User')}**")
+    st.caption("Engine: v5.4.4 Uncapped 🚀")
+
     if st.button("🚪 Logout", use_container_width=True):
         logout()
         st.rerun()
@@ -381,16 +410,24 @@ with st.sidebar:
             open_chat(chat["id"])
             st.rerun()
 
-    with st.expander("⚙️ Settings"):
+    with st.expander("⚙️ Settings (Vision & Uncapped)"):
         persona = st.selectbox("Persona", list(PERSONAS))
         mode = st.radio("Mode", list(MODES))
         temp = st.slider("Masti 🔥", 0.0, 1.5, MODE_TEMPERATURE[mode], 0.1)
+        model = st.selectbox("AI Model", available_models, index=0)
         voice_on = st.toggle("Anushka Bole 🎙️", value=True)
         accent = st.selectbox("Accent", list(ACCENTS))
         slow = st.toggle("Dheere bolo", value=False)
 
-st.title("Anushka SA v5.4.2.061 👑")
-st.caption("BOOYAH MASTER • AI Chatbot Active!")
+st.title("Anushka SA v5.4.4 👑")
+st.caption("VISION & UNCAFFED MASTER • Photo upload karo aur unlimited chat karo!")
+
+# File uploader for images / screenshots
+uploaded_file = st.file_uploader("📸 Error ya Code ka Screenshot yahan upload karo:", type=["png", "jpg", "jpeg"])
+image_bytes = None
+if uploaded_file is not None:
+    image_bytes = uploaded_file.read()
+    st.image(image_bytes, caption="Uploaded Image / Error Screenshot", use_container_width=True)
 
 # Render existing chat messages
 for msg in st.session_state.get("messages", []):
@@ -398,31 +435,40 @@ for msg in st.session_state.get("messages", []):
         st.markdown(msg["content"])
 
 if not st.session_state.get("messages"):
-    st.info("Ka ho! Sab thik-thak? 🍼 Neeche se kuch chuno ya type karo.")
+    st.info("Ka ho babu! Photo bhejo ya kuch bhi pucho, Anushka ekdam tayar hai! 😼🔥")
     cols = st.columns(2)
     for i, q in enumerate(QUICK_PROMPTS):
         if cols[i % 2].button(q, use_container_width=True, key=f"qp_{i}"):
             st.session_state.pending = q
             st.rerun()
 
-prompt = st.chat_input("Anushka se kuch poochho... 🎮")
+prompt = st.chat_input("Anushka se kuch poochho ya error share karo... 💻")
 prompt = prompt or st.session_state.pop("pending", None)
 
 if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    full_prompt = prompt
+    st.session_state.messages.append({"role": "user", "content": full_prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.markdown(full_prompt)
     try:
-        save_message("user", prompt)
+        save_message("user", full_prompt)
     except Exception:
         pass
 
     with st.chat_message("assistant", avatar="😼"):
         try:
-            with st.spinner("Soch rahi hai... 🧠"):
-                reply = ask_ai(st.session_state.messages, model, persona, mode, temp, st.session_state.get("memories", []))
+            with st.spinner("Anushka soch rahi hai aur file/photo check kar rahi hai... 🧠"):
+                reply = ask_ai(
+                    st.session_state.messages, 
+                    model, 
+                    persona, 
+                    mode, 
+                    temp, 
+                    st.session_state.get("memories", []),
+                    image_bytes=image_bytes
+                )
         except Exception as e:
-            reply = f"Error aa gaya: `{e}`"
+            reply = f"Arey babu error aa gaya: `{e}`"
         st.markdown(reply)
 
         if voice_on:
@@ -437,4 +483,3 @@ if prompt:
         save_message("assistant", reply)
     except Exception:
         pass
-    
