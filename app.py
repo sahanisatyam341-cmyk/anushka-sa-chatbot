@@ -8,18 +8,17 @@ import streamlit as st
 from PIL import Image
 
 # ============================================================
-# Anushka SA — Advanced v5.4.5 Fixed Vision & Uncapped 😼🔥
+# Anushka SA — Advanced v5.4.6 Ultimate Fix 😼🔥
 # ============================================================
 
 st.set_page_config(
-    page_title="Anushka SA v5.4.5 😼🔥",
+    page_title="Anushka SA v5.4.6 😼🔥",
     page_icon="😼",
     layout="centered",
 )
 
 GROQ_URL = "https://api.groq.com/openai/v1"
 PREFERRED_MODELS = [
-    "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
 ]
 
@@ -205,8 +204,8 @@ def db(method, table, params=None, body=None, returning=False):
 
 # -------------------- Login / Signup --------------------
 def login_page():
-    st.title("Anushka SA v5.4.5 👑")
-    st.caption("FIXED MASTER • Login Portal")
+    st.title("Anushka SA v5.4.6 👑")
+    st.caption("ULTIMATE MASTER • Login Portal")
 
     if not (SUPABASE_URL and SUPABASE_ANON_KEY):
         st.error("Supabase URL aur Anon Key secrets mein set nahi hain.")
@@ -302,26 +301,11 @@ def delete_memory(mem_id):
     load_memories()
 
 
-# -------------------- AI & Models --------------------
-@st.cache_data(ttl=600, show_spinner=False)
-def list_models(api_key):
-    if not api_key:
-        return PREFERRED_MODELS
-    try:
-        res = requests.get(f"{GROQ_URL}/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=15)
-        if res.ok:
-            ids = [i["id"] for i in res.json().get("data", [])]
-            other_models = [m for m in ids if not any(x in m.lower() for x in ("whisper", "tts", "embed", "vision", "llava", "preview"))]
-            return PREFERRED_MODELS + other_models
-    except Exception:
-        pass
-    return PREFERRED_MODELS
-
-
+# -------------------- AI --------------------
 def ask_ai(history, model, persona, mode, temp, memories):
     mem_ctx = "\n".join(f"- {m['memory']}" for m in memories) if memories else ""
     sys_prompt = (
-        'You are "Anushka SA v5.4.5" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
+        'You are "Anushka SA v5.4.6" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
         "Always reply in a warm, friendly tone with engaging Hinglish and Bhojpuri flavor like 'Ka ho babu, sab thik-thak?'. "
         f"Style: {PERSONAS[persona]} Mode: {MODES[mode]} "
         f"Memory context: {mem_ctx}"
@@ -370,12 +354,11 @@ except Exception:
     st.session_state.chats = []
     st.session_state.memories = []
 
-available_models = list_models(GROQ_KEY) if GROQ_KEY else PREFERRED_MODELS
-model = available_models[0] if available_models else "llama-3.3-70b-versatile"
+model = "llama-3.1-8b-instant"
 
 with st.sidebar:
     st.markdown(f"**👤 {st.session_state.user.get('email', 'User')}**")
-    st.caption("Engine: v5.4.5 Fixed 🚀")
+    st.caption("Engine: v5.4.6 Ultimate 🚀")
 
     if st.button("🚪 Logout", use_container_width=True):
         logout()
@@ -395,15 +378,13 @@ with st.sidebar:
         persona = st.selectbox("Persona", list(PERSONAS))
         mode = st.radio("Mode", list(MODES))
         temp = st.slider("Masti 🔥", 0.0, 1.5, MODE_TEMPERATURE[mode], 0.1)
-        model = st.selectbox("AI Model", available_models, index=0)
         voice_on = st.toggle("Anushka Bole 🎙️", value=True)
         accent = st.selectbox("Accent", list(ACCENTS))
         slow = st.toggle("Dheere bolo", value=False)
 
-st.title("Anushka SA v5.4.5 👑")
+st.title("Anushka SA v5.4.6 👑")
 st.caption("AI CODING & GAMING COMPANION • Ekdam mast chat karo!")
 
-# Render existing chat messages first so input box stays clearly at bottom
 for msg in st.session_state.get("messages", []):
     with st.chat_message(msg["role"], avatar="😼" if msg["role"] == "assistant" else None):
         st.markdown(msg["content"])
@@ -456,3 +437,4 @@ if prompt:
         save_message("assistant", reply)
     except Exception:
         pass
+    
