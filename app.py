@@ -21,6 +21,7 @@ MODES = {
     "Masti 😂": "Focus on friendly, funny, general chat.",
 }
 QUICK = ["🎮 Bermuda Tips", "🔥 Best Squad Setup", "🎯 Headshot Tips", "🧠 Math ka doubt hai"]
+MODE_TEMP = {"Gaming 🎮": 0.9, "Padhai 📚": 0.2, "Masti 😂": 0.9}  # Padhai = kam masti, sahi jawab
 ACCENTS = {"Indian 🇮🇳": "co.in", "US 🇺🇸": "com", "UK 🇬🇧": "co.uk"}
 
 
@@ -272,7 +273,7 @@ with st.sidebar:
     with st.expander("⚙️ Settings"):
         persona = st.selectbox("Persona Style", list(PERSONAS))
         mode = st.radio("Mode", list(MODES))
-        temperature = st.slider("Masti level 🔥", 0.0, 1.5, 0.9, 0.1)
+        temperature = st.slider("Masti level 🔥", 0.0, 1.5, MODE_TEMP[mode], 0.1, key=f"temp_{mode}")
         opts = available or [default_model(available)]
         dm = default_model(available)
         model = st.selectbox("AI Model", opts, index=opts.index(dm) if dm in opts else 0)
@@ -330,4 +331,3 @@ if prompt:
             save_message("assistant", reply)
         except Exception as e:
             st.toast(f"History save nahi hui: {e}")
-        
