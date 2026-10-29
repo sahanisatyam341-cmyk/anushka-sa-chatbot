@@ -8,11 +8,11 @@ import streamlit as st
 from PIL import Image
 
 # ============================================================
-# Anushka SA — Advanced v5.4.6 Ultimate Fix 😼🔥
+# Anushka SA — Advanced v5.4.7 Model Selector Edition 😼🔥
 # ============================================================
 
 st.set_page_config(
-    page_title="Anushka SA v5.4.6 😼🔥",
+    page_title="Anushka SA v5.4.7 😼🔥",
     page_icon="😼",
     layout="centered",
 )
@@ -20,6 +20,9 @@ st.set_page_config(
 GROQ_URL = "https://api.groq.com/openai/v1"
 PREFERRED_MODELS = [
     "llama-3.1-8b-instant",
+    "llama-3.3-70b-versatile",
+    "gemma2-9b-it",
+    "mixtral-8x7b-32768",
 ]
 
 PERSONAS = {
@@ -204,8 +207,8 @@ def db(method, table, params=None, body=None, returning=False):
 
 # -------------------- Login / Signup --------------------
 def login_page():
-    st.title("Anushka SA v5.4.6 👑")
-    st.caption("ULTIMATE MASTER • Login Portal")
+    st.title("Anushka SA v5.4.7 👑")
+    st.caption("MODEL SELECTOR MASTER • Login Portal")
 
     if not (SUPABASE_URL and SUPABASE_ANON_KEY):
         st.error("Supabase URL aur Anon Key secrets mein set nahi hain.")
@@ -305,7 +308,7 @@ def delete_memory(mem_id):
 def ask_ai(history, model, persona, mode, temp, memories):
     mem_ctx = "\n".join(f"- {m['memory']}" for m in memories) if memories else ""
     sys_prompt = (
-        'You are "Anushka SA v5.4.6" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
+        'You are "Anushka SA v5.4.7" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
         "Always reply in a warm, friendly tone with engaging Hinglish and Bhojpuri flavor like 'Ka ho babu, sab thik-thak?'. "
         f"Style: {PERSONAS[persona]} Mode: {MODES[mode]} "
         f"Memory context: {mem_ctx}"
@@ -354,11 +357,9 @@ except Exception:
     st.session_state.chats = []
     st.session_state.memories = []
 
-model = "llama-3.1-8b-instant"
-
 with st.sidebar:
     st.markdown(f"**👤 {st.session_state.user.get('email', 'User')}**")
-    st.caption("Engine: v5.4.6 Ultimate 🚀")
+    st.caption("Engine: v5.4.7 Selector 🚀")
 
     if st.button("🚪 Logout", use_container_width=True):
         logout()
@@ -374,7 +375,8 @@ with st.sidebar:
             open_chat(chat["id"])
             st.rerun()
 
-    with st.expander("⚙️ Settings"):
+    with st.expander("⚙️ Settings", expanded=True):
+        selected_model = st.selectbox("Select AI Model", PREFERRED_MODELS, index=0)
         persona = st.selectbox("Persona", list(PERSONAS))
         mode = st.radio("Mode", list(MODES))
         temp = st.slider("Masti 🔥", 0.0, 1.5, MODE_TEMPERATURE[mode], 0.1)
@@ -382,15 +384,15 @@ with st.sidebar:
         accent = st.selectbox("Accent", list(ACCENTS))
         slow = st.toggle("Dheere bolo", value=False)
 
-st.title("Anushka SA v5.4.6 👑")
-st.caption("AI CODING & GAMING COMPANION • Ekdam mast chat karo!")
+st.title("Anushka SA v5.4.7 👑")
+st.caption("AI CODING & GAMING COMPANION • Model change karke try karo!")
 
 for msg in st.session_state.get("messages", []):
     with st.chat_message(msg["role"], avatar="😼" if msg["role"] == "assistant" else None):
         st.markdown(msg["content"])
 
 if not st.session_state.get("messages"):
-    st.info("Ka ho babu! Kuch bhi pucho ya code error batao, Anushka ekdam tayar hai! 😼🔥")
+    st.info("Ka ho babu! Settings se model change karke check karo, sab set ho jayega! 😼🔥")
     cols = st.columns(2)
     for i, q in enumerate(QUICK_PROMPTS):
         if cols[i % 2].button(q, use_container_width=True, key=f"qp_{i}"):
@@ -415,14 +417,17 @@ if prompt:
             with st.spinner("Anushka soch rahi hai... 🧠"):
                 reply = ask_ai(
                     st.session_state.messages, 
-                    model, 
+                    selected_model, 
                     persona, 
                     mode, 
                     temp, 
                     st.session_state.get("memories", [])
                 )
         except Exception as e:
-            reply = f"Arey babu error aa gaya: `{e}`"
+            reply = (
+                f"Arey babu error aa gaya: `{e}`\n\n"
+                "💡 **Tip:** Side bar (⚙️ Settings) me jaakar doosra model select karke try karo!"
+            )
         st.markdown(reply)
 
         if voice_on:
@@ -437,4 +442,3 @@ if prompt:
         save_message("assistant", reply)
     except Exception:
         pass
-    
