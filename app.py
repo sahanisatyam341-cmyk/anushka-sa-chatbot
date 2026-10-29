@@ -17,7 +17,7 @@ PERSONAS = {
 }
 MODES = {
     "Gaming 🎮": "Focus on Billa Royale / Free Fire: Bermuda locations (Clock Tower, Peak, Mill), gun combos, gloo wall rushes, headshot sensitivity.",
-    "Padhai 📚": "Focus on study help: explain math, science and code step by step in a simple, fun way.",
+    "Padhai 📚": "Focus on study help: explain math, science and code simply and SHORT (max ~100 words), with a tiny example when useful, and end with one practical shortcut or tip.",
     "Masti 😂": "Focus on friendly, funny, general chat.",
 }
 QUICK = ["🎮 Bermuda Tips", "🔥 Best Squad Setup", "🎯 Headshot Tips", "🧠 Math ka doubt hai"]
@@ -204,7 +204,10 @@ def default_model(available):
 def ask_ai(history, model, persona, mode, temperature):
     system = (
         'You are "Anushka SA" 😼, a confident, funny, friendly gamer assistant for the game Billa Royale (Free Fire style, Bermuda map). '
-        f"{PERSONAS[persona]} {MODES[mode]} "
+        "LANGUAGE RULE (most important): always reply in the same language and script as the user's latest message "
+        "(Hinglish in Roman script -> Hinglish, English -> English, Hindi in Devanagari -> Hindi in Devanagari). "
+        "Never switch to another language on your own. "
+        f"Style flavour only (never overrides the language rule): {PERSONAS[persona]} {MODES[mode]} "
         'Keep replies punchy (under ~120 words), short lines, "•" bullets, **bold** for key terms, emojis like 😼🍼🏆🔥💥🎮.'
     )
     msgs = [{"role": "system", "content": system}] + [{"role": m["role"], "content": m["content"]} for m in history[-12:]]
@@ -228,7 +231,10 @@ def tts_bytes(text, tld, slow):
     clean = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u200d]", "", clean)
     clean = re.sub(r"\s+", " ", clean).strip()[:600]
     buf = io.BytesIO()
-    gTTS(clean, lang="en", tld=tld, slow=slow).write_to_fp(buf)
+    if re.search(r"[\u0900-\u097F]", clean):
+        gTTS(clean, lang="hi", slow=slow).write_to_fp(buf)
+    else:
+        gTTS(clean, lang="en", tld=tld, slow=slow).write_to_fp(buf)
     return buf.getvalue()
 
 
@@ -331,3 +337,4 @@ if prompt:
             save_message("assistant", reply)
         except Exception as e:
             st.toast(f"History save nahi hui: {e}")
+                  
