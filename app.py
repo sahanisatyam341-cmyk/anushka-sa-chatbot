@@ -8,18 +8,17 @@ import streamlit as st
 from PIL import Image
 
 # ============================================================
-# Anushka SA — Advanced v5.4.4 Vision & Uncapped Edition 😼🔥
+# Anushka SA — Advanced v5.4.5 Fixed Vision & Uncapped 😼🔥
 # ============================================================
 
 st.set_page_config(
-    page_title="Anushka SA v5.4.4 Uncapped 😼🔥",
+    page_title="Anushka SA v5.4.5 😼🔥",
     page_icon="😼",
     layout="centered",
 )
 
 GROQ_URL = "https://api.groq.com/openai/v1"
 PREFERRED_MODELS = [
-    "llama-3.2-11b-vision-preview",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
 ]
@@ -206,8 +205,8 @@ def db(method, table, params=None, body=None, returning=False):
 
 # -------------------- Login / Signup --------------------
 def login_page():
-    st.title("Anushka SA v5.4.4 👑")
-    st.caption("VISION & UNCAFFED MASTER • Login Portal")
+    st.title("Anushka SA v5.4.5 👑")
+    st.caption("FIXED MASTER • Login Portal")
 
     if not (SUPABASE_URL and SUPABASE_ANON_KEY):
         st.error("Supabase URL aur Anon Key secrets mein set nahi hain.")
@@ -303,7 +302,7 @@ def delete_memory(mem_id):
     load_memories()
 
 
-# -------------------- AI & Vision --------------------
+# -------------------- AI & Models --------------------
 @st.cache_data(ttl=600, show_spinner=False)
 def list_models(api_key):
     if not api_key:
@@ -312,51 +311,33 @@ def list_models(api_key):
         res = requests.get(f"{GROQ_URL}/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=15)
         if res.ok:
             ids = [i["id"] for i in res.json().get("data", [])]
-            vision_models = [m for m in ids if "vision" in m.lower() or "llava" in m.lower()]
-            other_models = [m for m in ids if not any(x in m.lower() for x in ("whisper", "tts", "embed", "vision", "llava"))]
-            return vision_models + PREFERRED_MODELS + other_models
+            other_models = [m for m in ids if not any(x in m.lower() for x in ("whisper", "tts", "embed", "vision", "llava", "preview"))]
+            return PREFERRED_MODELS + other_models
     except Exception:
         pass
     return PREFERRED_MODELS
 
 
-def ask_ai(history, model, persona, mode, temp, memories, image_bytes=None):
+def ask_ai(history, model, persona, mode, temp, memories):
     mem_ctx = "\n".join(f"- {m['memory']}" for m in memories) if memories else ""
     sys_prompt = (
-        'You are "Anushka SA v5.4.4" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
+        'You are "Anushka SA v5.4.5" 😼, a loving, playful, and super smart AI companion and coding/gaming expert. '
         "Always reply in a warm, friendly tone with engaging Hinglish and Bhojpuri flavor like 'Ka ho babu, sab thik-thak?'. "
         f"Style: {PERSONAS[persona]} Mode: {MODES[mode]} "
-        "If an image or code error screenshot is provided, examine it deeply, understand the bug, and provide a clear, clean solution. "
         f"Memory context: {mem_ctx}"
     )
 
     messages = [{"role": "system", "content": sys_prompt}]
-    
-    # Keeping history optimized to prevent token limit errors
-    for idx, h in enumerate(history[-10:]):
+    for h in history[-10:]:
         role = h.get("role")
         content = h.get("content")
         if role in ("user", "assistant") and isinstance(content, str):
-            if idx == len(history[-10:]) - 1 and image_bytes and role == "user":
-                encoded_image = base64.b64encode(image_bytes).decode("utf-8")
-                messages.append({
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": content},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
-                    ]
-                })
-            else:
-                messages.append({"role": role, "content": content})
-
-    active_model = model
-    if image_bytes and "vision" not in active_model.lower():
-        active_model = "llama-3.2-11b-vision-preview"
+            messages.append({"role": role, "content": content})
 
     res = requests.post(
         f"{GROQ_URL}/chat/completions",
         headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"},
-        json={"model": active_model, "messages": messages, "temperature": temp, "max_tokens": 2048},
+        json={"model": model, "messages": messages, "temperature": temp, "max_tokens": 2048},
         timeout=60,
     )
     if not res.ok:
@@ -390,11 +371,11 @@ except Exception:
     st.session_state.memories = []
 
 available_models = list_models(GROQ_KEY) if GROQ_KEY else PREFERRED_MODELS
-model = available_models[0] if available_models else "llama-3.2-11b-vision-preview"
+model = available_models[0] if available_models else "llama-3.3-70b-versatile"
 
 with st.sidebar:
     st.markdown(f"**👤 {st.session_state.user.get('email', 'User')}**")
-    st.caption("Engine: v5.4.4 Uncapped 🚀")
+    st.caption("Engine: v5.4.5 Fixed 🚀")
 
     if st.button("🚪 Logout", use_container_width=True):
         logout()
@@ -410,7 +391,7 @@ with st.sidebar:
             open_chat(chat["id"])
             st.rerun()
 
-    with st.expander("⚙️ Settings (Vision & Uncapped)"):
+    with st.expander("⚙️ Settings"):
         persona = st.selectbox("Persona", list(PERSONAS))
         mode = st.radio("Mode", list(MODES))
         temp = st.slider("Masti 🔥", 0.0, 1.5, MODE_TEMPERATURE[mode], 0.1)
@@ -419,30 +400,23 @@ with st.sidebar:
         accent = st.selectbox("Accent", list(ACCENTS))
         slow = st.toggle("Dheere bolo", value=False)
 
-st.title("Anushka SA v5.4.4 👑")
-st.caption("VISION & UNCAFFED MASTER • Photo upload karo aur unlimited chat karo!")
+st.title("Anushka SA v5.4.5 👑")
+st.caption("AI CODING & GAMING COMPANION • Ekdam mast chat karo!")
 
-# File uploader for images / screenshots
-uploaded_file = st.file_uploader("📸 Error ya Code ka Screenshot yahan upload karo:", type=["png", "jpg", "jpeg"])
-image_bytes = None
-if uploaded_file is not None:
-    image_bytes = uploaded_file.read()
-    st.image(image_bytes, caption="Uploaded Image / Error Screenshot", use_container_width=True)
-
-# Render existing chat messages
+# Render existing chat messages first so input box stays clearly at bottom
 for msg in st.session_state.get("messages", []):
     with st.chat_message(msg["role"], avatar="😼" if msg["role"] == "assistant" else None):
         st.markdown(msg["content"])
 
 if not st.session_state.get("messages"):
-    st.info("Ka ho babu! Photo bhejo ya kuch bhi pucho, Anushka ekdam tayar hai! 😼🔥")
+    st.info("Ka ho babu! Kuch bhi pucho ya code error batao, Anushka ekdam tayar hai! 😼🔥")
     cols = st.columns(2)
     for i, q in enumerate(QUICK_PROMPTS):
         if cols[i % 2].button(q, use_container_width=True, key=f"qp_{i}"):
             st.session_state.pending = q
             st.rerun()
 
-prompt = st.chat_input("Anushka se kuch poochho ya error share karo... 💻")
+prompt = st.chat_input("Anushka se kuch poochho ya code error share karo... 💻")
 prompt = prompt or st.session_state.pop("pending", None)
 
 if prompt:
@@ -457,15 +431,14 @@ if prompt:
 
     with st.chat_message("assistant", avatar="😼"):
         try:
-            with st.spinner("Anushka soch rahi hai aur file/photo check kar rahi hai... 🧠"):
+            with st.spinner("Anushka soch rahi hai... 🧠"):
                 reply = ask_ai(
                     st.session_state.messages, 
                     model, 
                     persona, 
                     mode, 
                     temp, 
-                    st.session_state.get("memories", []),
-                    image_bytes=image_bytes
+                    st.session_state.get("memories", [])
                 )
         except Exception as e:
             reply = f"Arey babu error aa gaya: `{e}`"
