@@ -97,7 +97,9 @@ def get_secret(*names):
     return ""
 
 
-GROQ_KEY = get_secret("GROQ_API_KEY", "GEMINI_API_KEY")
+GROQ_KEY = get_secret("GROQ_API_KEY")
+GEMINI_KEY = get_secret("GEMINI_API_KEY")
+GEMINI_MODEL = "gemini-2.5-flash"  # text + photo
 SUPABASE_URL = get_secret("SUPABASE_URL").rstrip("/")
 SUPABASE_ANON_KEY = get_secret("SUPABASE_ANON_KEY")
 
@@ -471,7 +473,44 @@ def choose_default_model(available_models):
     return available_models[0] if available_models else PREFERRED_MODELS[0]
 
 
-def ask_ai(history, model, persona, mode, temperature, memories):
+def ask_gemini(history, system_prompt, temperature, image=None):
+    items = [
+        m for m in history[-16:]
+        if m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)
+    ]
+    contents = []
+    for index, item in enumerate(items):
+        role = "user" if item["role"] == "user" else "model"
+        parts = [{"text": item["content"]}]
+        is_last = index == len(items) - 1
+        if image and is_last and role == "user":
+            image_bytes, mime_type = image
+            parts.insert(0, {"inline_data": {
+                "mime_type": mime_type or "image/jpeg",
+                "data": base64.b64encode(image_bytes).decode("ascii"),
+            }})
+        contents.append({"role": role, "parts": parts})
+
+    response = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+        headers={"x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json"},
+        json={
+            "contents": contents,
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "generationConfig": {"temperature": temperature},
+        },
+        timeout=90,
+    )
+    data = response.json()
+    if not response.ok:
+        raise RuntimeError(data.get("error", {}).get("message", f"HTTP {response.status_code}"))
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError("Gemini ka jawab expected format mein nahi aaya.")
+
+
+def ask_ai(history, model, persona, mode, temperature, memories, image=None):
     memory_context = ""
     if memories:
         memory_lines = "\n".join(
@@ -497,6 +536,15 @@ def ask_ai(history, model, persona, mode, temperature, memories):
         "like 😼🍼🏆🔥🎮 when they fit."
         + memory_context
     )
+
+    if GEMINI_KEY:
+        try:
+            return ask_gemini(history, system_prompt, temperature, image)
+        except Exception as error:
+            # Gemini limit/error: text chat ke liye Groq par fallback (photo ke liye nahi)
+            if image or not GROQ_KEY:
+                raise
+            st.toast(f"Gemini busy/limit: Groq se jawab de rahi hoon. ({error})")
 
     messages = [{"role": "system", "content": system_prompt}]
     for item in history[-16:]:
@@ -597,194 +645,4 @@ slow = False
 with st.sidebar:
     st.markdown(f"**{st.session_state.user.get('email', 'User')}**")
 
-    if st.button("🚪 Logout", use_container_width=True):
-        logout()
-        st.rerun()
-
-    if st.button("➕ Nayi Chat", use_container_width=True, type="primary"):
-        new_chat()
-        st.rerun()
-
-    st.markdown("### Chat History 🕘")
-    for chat in st.session_state.get("chats", []):
-        title = chat.get("title") or "Chat"
-        if st.button(
-            "💬 " + title[:36],
-            key=f"chat_{chat['id']}",
-            use_container_width=True,
-            type=(
-                "primary"
-                if chat["id"] == st.session_state.get("chat_id")
-                else "secondary"
-            ),
-        ):
-            try:
-                open_chat(chat["id"])
-            except Exception as error:
-                st.error(f"Chat open nahi hui: {error}")
-            st.rerun()
-
-    if st.session_state.get("chat_id") and st.button(
-        "🗑️ Ye chat delete karo", use_container_width=True
-    ):
-        try:
-            db(
-                "DELETE",
-                "anushka_chats",
-                {"id": f"eq.{st.session_state.chat_id}"},
-            )
-            load_chats()
-            new_chat()
-            st.rerun()
-        except Exception as error:
-            st.error(f"Chat delete nahi hui: {error}")
-
-    with st.expander("🧠 Memory", expanded=False):
-        st.caption(
-            "Yahan sirf woh baatein save karo jinhe tum future chats mein "
-            "yaad rakhwana chahte ho."
-        )
-        with st.form("save_memory_form", clear_on_submit=True):
-            memory_text = st.text_input(
-                "Anushka ko kya yaad rakhna chahiye?",
-                placeholder="Example: Mujhe Hinglish mein jawab pasand hain",
-                max_chars=500,
-            )
-            memory_submit = st.form_submit_button(
-                "Memory save karo", use_container_width=True
-            )
-
-        if memory_submit:
-            try:
-                save_memory(memory_text)
-                st.success("Memory save ho gayi! 😼")
-            except Exception as error:
-                st.error(f"Memory save nahi hui: {error}")
-
-        if st.session_state.get("memory_error"):
-            st.caption(
-                "Memory table access nahi ho paaya. SQL/table columns check karo."
-            )
-
-        memories = st.session_state.get("memories", [])
-        if not memories:
-            st.caption("Abhi koi saved memory nahi hai.")
-        else:
-            for memory_item in memories:
-                st.markdown(f"• {memory_item['memory']}")
-                if st.button(
-                    "Delete",
-                    key=f"delete_memory_{memory_item['id']}",
-                    use_container_width=False,
-                ):
-                    try:
-                        delete_memory(memory_item["id"])
-                        st.rerun()
-                    except Exception as error:
-                        st.error(f"Memory delete nahi hui: {error}")
-
-    with st.expander("⚙️ Settings"):
-        persona = st.selectbox("Persona Style", list(PERSONAS))
-        mode = st.radio("Mode", list(MODES))
-        temperature = st.slider(
-            "Masti level 🔥",
-            min_value=0.0,
-            max_value=1.5,
-            value=MODE_TEMPERATURE[mode],
-            step=0.1,
-            key=f"temperature_{mode}",
-        )
-
-        model_options = available_models or [choose_default_model(available_models)]
-        default_model_name = choose_default_model(available_models)
-        model = st.selectbox(
-            "AI Model",
-            model_options,
-            index=(
-                model_options.index(default_model_name)
-                if default_model_name in model_options
-                else 0
-            ),
-        )
-
-        voice_on = st.toggle("Anushka bole 🎙️", value=True)
-        accent = st.selectbox("Awaaz ka accent", list(ACCENTS))
-        slow = st.toggle("Dheere bolo", value=False)
-
-st.title("Anushka SA 👑")
-st.caption("BOOYAH MASTER • Gaming, padhai, coding aur masti — sab poochho!")
-
-if not GROQ_KEY:
-    st.warning(
-        "AI key set nahi hai. Streamlit Secrets mein GROQ_API_KEY add karo."
-    )
-
-for message in st.session_state.get("messages", []):
-    with st.chat_message(
-        message["role"],
-        avatar="😼" if message["role"] == "assistant" else None,
-    ):
-        st.markdown(message["content"])
-
-if not st.session_state.get("messages"):
-    st.info("Ka ho! Sab thik-thak? 🍼 Neeche se kuch chuno ya khud likho.")
-    columns = st.columns(2)
-    for index, quick_prompt in enumerate(QUICK_PROMPTS):
-        if columns[index % 2].button(
-            quick_prompt, use_container_width=True, key=f"quick_{index}"
-        ):
-            st.session_state.pending = quick_prompt
-            st.rerun()
-
-prompt = st.chat_input("Anushka se kuch poochho... 🎮")
-prompt = prompt or st.session_state.pop("pending", None)
-
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    try:
-        save_message("user", prompt)
-    except Exception as error:
-        st.toast(f"Chat history save nahi hui: {error}")
-
-    with st.chat_message("assistant", avatar="😼"):
-        success = True
-
-        if not GROQ_KEY:
-            reply = "Pehle GROQ_API_KEY set karo, tab AI jawab de paayegi. 🔑"
-            success = False
-        else:
-            try:
-                with st.spinner("Anushka soch rahi hai... 🧠"):
-                    reply = ask_ai(
-                        history=st.session_state.messages,
-                        model=model,
-                        persona=persona,
-                        mode=mode,
-                        temperature=temperature,
-                        memories=st.session_state.get("memories", []),
-                    )
-            except Exception as error:
-                reply = (
-                    "Arey, AI request mein dikkat aa gayi. 😿\n\n"
-                    f"Error: `{error}`"
-                )
-                success = False
-
-        st.markdown(reply)
-
-        if success and voice_on:
-            try:
-                audio = text_to_speech_bytes(reply, ACCENTS[accent], slow)
-                st.audio(audio, format="audio/mp3", autoplay=True)
-            except Exception:
-                st.caption("🔇 Awaaz abhi nahi ban paayi. Text reply available hai.")
-
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-    if success:
-        try:
-            save_message("assistant", reply)
-        except Exception as error:
-            st.toast(f"Assistant reply history mein save nahi hui: {error}")
+    if st.button("🚪 Logout", use_conta
